@@ -18,20 +18,22 @@ jobs:
     name: Status Checks
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           submodules: recursive
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: "temurin"
           java-version: "17"
-      - uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version-file: "build/.nvmrc"
           cache: "npm"
           cache-dependency-path: "build/package-lock.json"
       - name: Install xmllint
-        run: sudo apt-get install -y libxml2-utils
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libxml2-utils
       - name: Run all pipelines
         run: |
           make --keep-going all

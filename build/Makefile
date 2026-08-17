@@ -153,8 +153,9 @@ $(LINKCHECK_OUTPUT): node_modules $(LINKCHECK_CONFIG)
 	@mkdir -p $(GENERATED_DIR)
 	@echo Checking Markdown links...
 	cd ..; git ls-files -z "*.md" | \
-		xargs -0 npx --prefix build/ markdown-link-check -c build/$(LINKCHECK_CONFIG) | \
+		xargs -0n1 npx --prefix build/ markdown-link-check -c build/$(LINKCHECK_CONFIG) | \
 		tee build/$(LINKCHECK_OUTPUT); \
+		echo ""; echo "... Done checking Markdown links."; \
 	exit $${PIPESTATUS[1]}
 
 .PHONY: clean-linkcheck
@@ -175,7 +176,7 @@ validate-jsonschemas: node_modules $(JSONSCHEMA_OUTPUTS) ## Validate generated J
 
 .PHONY: validate-xsds
 validate-xsds: $(XSD_OUTPUTS) ## Validate generated XSD files
-	@echo Validting generated XSDs
+	@echo Validating generated XSDs
 	xmllint --noout $(XSD_OUTPUTS)
 
 VALIDATE_COMPOSITION_TARGETS:=$(patsubst $(SRC_DIR)/oscal_%_metaschema.xml,validate-composition-%,$(METASCHEMAS))

@@ -7,7 +7,7 @@
 <METASCHEMA xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns="http://csrc.nist.gov/ns/oscal/metaschema/1.0">
       <schema-name>OSCAL Profile Model</schema-name>
-      <schema-version>1.1.2</schema-version>
+      <schema-version>1.2.3</schema-version>
       <short-name>oscal-profile</short-name>
       <namespace>http://csrc.nist.gov/ns/oscal/1.0</namespace>
       <json-base-uri>http://csrc.nist.gov/ns/oscal</json-base-uri>
@@ -118,7 +118,7 @@
                               <description>Declare how clashing controls should be
                                     handled.</description>
                               <constraint>
-                                    <allowed-values>
+                                    <allowed-values id="oscal-profile-merge-combine-method-values">
                                           <enum value="use-first">Use the first definition - the first control with a given ID is used; subsequent ones are discarded</enum>
                                           <enum value="merge" deprecated="1.0.1"
                                                   >**(<i>deprecated</i>)** **(<i>unspecified</i>)**
@@ -129,7 +129,7 @@
                               </constraint>
                         </define-flag>
                         <constraint>
-                              <expect id="req-merge-combine" target="." test="not(@method='merge')"/>
+                              <expect id="oscal-profile-req-merge-combine" target="." test="not(@method='merge')"/>
                         </constraint>
                   </define-assembly>
                   <choice>
@@ -224,7 +224,7 @@
                               insertion.</description>
                         <group-as name="set-parameters" in-json="ARRAY"/>
                         <define-flag required="yes" name="param-id" as-type="token">
-                              <!-- This is an id because the idenfier is assigned and managed by humans. -->
+                              <!-- This is an id because the identifier is assigned and managed by humans. -->
                               <formal-name>Parameter ID</formal-name>
                               <!-- Identifier Declaration -->
                               <description>An identifier for the parameter.</description>
@@ -313,10 +313,10 @@
                                           <formal-name>Item Name Reference</formal-name>
                                           <description>Identify items to remove by the name of the
                                                 item's information object name, e.g.
-                                                  <code>title</code> or
-                                                <code>prop</code>.</description>
+                                                  <code>prop</code> or
+                                                <code>link</code>.</description>
                                           <constraint>
-                                                <allowed-values>
+                                                <allowed-values id="oscal-profile-alter-by-item-name-values">
                                                       <enum value="param">A descendant parameter and all of its descendants.</enum>
                                                       <enum value="prop">A descendant property and all of its descendants.</enum>
                                                       <enum value="link">A descendant link and all of its descendants.</enum>
@@ -326,10 +326,14 @@
                                                 </allowed-values>
                                           </constraint>
                                     </define-flag>
-                                    <define-flag name="by-ns" as-type="token">
+                                    <define-flag name="by-ns" as-type="uri">
                                           <formal-name>Item Namespace Reference</formal-name>
                                           <description>Identify items to remove by the item's <code>ns</code>, which is the namespace associated with a <code>part</code>, or <code>prop</code>.</description>
                                     </define-flag>
+                                    <model>
+                                          <!-- Without a model the flags do not get generated in JSON schemas -->
+                                          <field ref="remarks" in-xml="WITH_WRAPPER" min-occurs="0" max-occurs="1"/>
+                                    </model>
                                     <remarks>
                                           <p>Use <code>by-name</code>, <code>by-class</code>, <code>by-id</code> or <code>by-item-name</code> to indicate class tokens or ID reference, or the formal name, of the component to be removed or erased from a control, when a catalog is resolved. The control affected is indicated by the pointer on the removal's parent (containing) <code>alter</code> element.</p>
                                           <p>To change an element, use <code>remove</code> to remove the element, then <code>add</code> to add it back again with changes.</p>
@@ -346,7 +350,7 @@
                                                 the targeted element (beside it or inside
                                                 it).</description>
                                           <constraint>
-                                                <allowed-values>
+                                                <allowed-values id="oscal-alter-position-values">
                                                       <enum value="before">Preceding the by-id target</enum>
                                                       <enum value="after">Following the by-id target</enum>
                                                       <enum value="starting">Inside the control or by-id target, at the start</enum>
@@ -377,7 +381,7 @@
                                           </assembly>
                                     </model>
                                     <constraint>
-                                          <allowed-values target="prop[has-oscal-namespace('http://csrc.nist.gov/ns/oscal')]/@name">
+                                          <allowed-values id="oscal-profile-modify-alter-prop-name-values" target="prop[has-oscal-namespace('http://csrc.nist.gov/ns/oscal')]/@name">
                                                 &allowed-values-control-group-property-name;
                                           </allowed-values>
                                     </constraint>
@@ -395,7 +399,7 @@
                   </define-assembly>
             </model>
             <constraint>
-                  <is-unique id="unique-profile-modify-set-parameter" target="set-parameter">
+                  <is-unique id="oscal-unique-profile-modify-set-parameter" target="set-parameter">
                         <key-field target="@param-id"/>
                         <remarks>
                               <p>Since multiple <code>set-parameter</code> entries can be provided, each parameter must be set only once.</p>
@@ -411,10 +415,10 @@
                   <formal-name>Order</formal-name>
                   <description>A designation of how a selection of controls in a profile is to be ordered.</description>
                   <constraint>
-                        <allowed-values>
-                              <enum value="keep"/>
-                              <enum value="ascending"/>
-                              <enum value="descending"/>
+                        <allowed-values id="oscal-profile-insert-controls-order-values">
+                              <enum value="keep">Use the order of their appearance, using a depth-first traversal of the source profile's imports.</enum>
+                              <enum value="ascending">Sort all selected controls into ascending alphanumeric order by their ID.</enum>
+                              <enum value="descending">Sort all selected controls into descending alphanumeric order by their ID.</enum>
                         </allowed-values>
                   </constraint>
             </define-flag>
@@ -439,7 +443,8 @@
                   <p>If this directive is not provided, then no controls are to be inserted; i.e., all controls are included explicitly.</p>
             </remarks>
       </define-assembly>
-      <define-assembly name="select-control-by-id" scope="local">
+      <!-- assembly definition moved to the control-common file for reuse in mapping -->
+      <!-- define-assembly name="select-control-by-id" scope="local">
             <formal-name>Select Control</formal-name>
             <description>Select a control or controls from an imported control set.</description>
             <flag ref="with-child-controls"/>
@@ -454,28 +459,34 @@
             <remarks>
                   <p>If <code>with-child-controls</code> is <q>yes</q> on the call to a control, no sibling <code>call</code>elements need to be used to call any controls appearing within it. Since generally, this is how control enhancements are represented (as controls within controls), this provides a way to include controls with all their dependent controls (enhancements) without having to call them individually.</p>
             </remarks>
-      </define-assembly>
-      <define-flag as-type="token" name="with-child-controls">
+       </define-assembly -->
+      <!-- define-flag as-type="token" name="with-child-controls">
             <formal-name>Include Contained Controls with Control</formal-name>
             <description>When a control is included, whether its child (dependent) controls are also included.</description>
             <constraint>
-                  <allowed-values>
+                  <allowed-values id="oscal-profile-with-child-controls-values">
                         <enum value="yes">Include child controls with an included control.</enum>
                         <enum value="no">When importing a control, only include child controls that are also explicitly called.</enum>
                   </allowed-values>
             </constraint>
-      </define-flag>
-      <define-flag as-type="string" name="pattern">
+      </define-flag -->
+      <!-- next flag definition was moved to the control-common file for reuse in mapping -->
+      <!-- define-flag as-type="string" name="pattern">
             <formal-name>Pattern</formal-name>
             <description>A <a href="https://en.wikipedia.org/wiki/Glob_(programming)">glob expression</a> matching the IDs of one or more controls to be selected.</description>
-      </define-flag>
-      <define-field name="with-id" as-type="token">
+      </define-flag -->
+      <!-- next field definition was moved to the control-common file for reuse in mapping -->
+      <!-- define-field name="with-id" as-type="token">
             <formal-name>Match Controls by Identifier</formal-name>
             <description>Selecting a control by its ID given as a literal.</description>
-      </define-field>
-      <define-assembly name="matching">
+      </define-field -->
+      <!-- next assembly definition was moved to the control-common file for reuse in mapping -->
+      <!-- define-assembly name="matching">
             <formal-name>Match Controls by Pattern</formal-name>
             <description>Selecting a set of controls by matching their IDs with a wildcard pattern.</description>
             <flag ref="pattern"/>
-      </define-assembly>
+            <model>
+                  <field ref="remarks" in-xml="WITH_WRAPPER" min-occurs="0" max-occurs="1"/>
+            </model>
+      </define-assembly -->
 </METASCHEMA>
